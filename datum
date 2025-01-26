@@ -1,0 +1,104 @@
+// rc.cpp
+#include "rc.h"
+
+bool Datum::jePlatneDatum(int den, int mesic, int rok) const {
+    if (rok < MIN_YEAR || rok > MAX_YEAR) return false;
+    if (mesic < 1 || mesic > 12) return false;
+
+    int maxDnu = pocetDniVMesici(mesic, rok);
+    return den >= 1 && den <= maxDnu;
+}
+
+bool Datum::jePrestupnyRok(int rok) const {
+    return (rok % 4 == 0 && rok % 100 != 0) || (rok % 400 == 0);
+}
+
+int Datum::pocetDniVMesici(int mesic, int rok) const {
+    switch (mesic) {
+        case 4: case 6: case 9: case 11: return 30;
+        case 2: return jePrestupnyRok(rok) ? 29 : 28;
+        default: return 31;
+    }
+}
+
+void Datum::nastavSystemoveDatum() {
+    time_t t = time(nullptr);
+    tm *cas = localtime(&t);
+    den = cas->tm_mday;
+    mesic = cas->tm_mon + 1;
+    rok = cas->tm_year + 1900;
+}
+
+int Datum::pocetDniOd1970() const {
+    int dny = 0;
+    for (int r = MIN_YEAR; r < rok; ++r) {
+        dny += jePrestupnyRok(r) ? 366 : 365;
+    }
+    for (int m = 1; m < mesic; ++m) {
+        dny += pocetDniVMesici(m, rok);
+    }
+    dny += den - 1;
+    return dny;
+}
+
+Datum::Datum() {
+    nastavSystemoveDatum();
+}
+
+Datum::Datum(int d, int m, int r) {
+    if (!jePlatneDatum(d, m, r)) {
+        throw invalid_argument("Neplatne datum!");
+    }
+    den = d;
+    mesic = m;
+    rok = r;
+}
+
+Datum::Datum(const Datum &dalsi) : den(dalsi.den), mesic(dalsi.mesic), rok(dalsi.rok) {}
+
+int Datum::getDen() const { return den; }
+int Datum::getMesic() const { return mesic; }
+int Datum::getRok() const { return rok; }
+
+void Datum::nastavDatum(int d, int m, int r) {
+    if (!jePlatneDatum(d, m, r)) {
+        throw invalid_argument("Neplatne datum!");
+    }
+    den = d;
+    mesic = m;
+    rok = r;
+}
+
+int Datum::denVTydnu() const {
+    int dny = pocetDniOd1970();
+    return (dny + 4) % 7; // 1. 1. 1970 byl ctvrtek (den 4)
+}
+
+ostream &operator<<(ostream &out, const Datum &datum) {
+    out << datum.den << "." << datum.mesic << "." << datum.rok << " (";
+    out << datum.pocetDniOd1970() << " dnu od 1. 1. 1970, " << dny[datum.denVTydnu()] << ")";
+    return out;
+}
+
+// main.cpp
+#include "rc.h"
+
+int main() {
+    try {
+        Datum dnes;
+        cout << "Systemove datum: " << dnes << endl;
+
+        Datum vlastni(13, 1, 2025);
+        cout << "Vlastni datum: " << vlastni << endl;
+
+        Datum kopie(vlastni);
+        cout << "Kopie vlastniho data: " << kopie << endl;
+
+        vlastni.nastavDatum(1, 1, 1970);
+        cout << "Zmenene datum: " << vlastni << endl;
+    } catch (const exception &e) {
+        cerr << "Chyba: " << e.what() << endl;
+    }
+
+    return 0;
+}
