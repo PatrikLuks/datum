@@ -1,3 +1,45 @@
+// rc.h
+#ifndef RC_H
+#define RC_H
+
+#include <iostream>
+#include <stdexcept>
+
+using namespace std;
+
+const int MIN_YEAR = 1970;
+const int MAX_YEAR = 2050;
+static const char *dny[] = {"Pondeli", "Utery", "Streda", "Ctvrtek", "Patek", "Sobota", "Nedele"};
+
+class Datum {
+public:
+    Datum();
+    Datum(int d, int m, int r);
+    Datum(const Datum &dalsi);
+
+    int getDen() const;
+    int getMesic() const;
+    int getRok() const;
+
+    void nastavDatum(int d, int m, int r);
+    int denVTydnu() const;
+
+    friend ostream &operator<<(ostream &out, const Datum &datum);
+
+private:
+    int den;
+    int mesic;
+    int rok;
+
+    bool jePlatneDatum(int den, int mesic, int rok) const;
+    bool jePrestupnyRok(int rok) const;
+    int pocetDniVMesici(int mesic, int rok) const;
+    void nastavSystemoveDatum();
+    int pocetDniOd1970() const;
+};
+
+#endif // RC_H
+
 // rc.cpp
 #include "rc.h"
 
